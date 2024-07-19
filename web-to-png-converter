@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Convert WebP to PNG</title>
+</head>
+<body>
+    <input type="file" id="upload" accept="image/webp" multiple />
+    <div id="downloads"></div>
+
+    <script>
+        document.getElementById('upload').addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            const downloadsDiv = document.getElementById('downloads');
+            downloadsDiv.innerHTML = ''; // Clear previous links
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+
+                        const pngDataUrl = canvas.toDataURL('image/png');
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = pngDataUrl;
+                        downloadLink.download = file.name.replace('.webp', '.png');
+                        downloadLink.textContent = `Download ${file.name.replace('.webp', '.png')}`;
+                        downloadLink.style.display = 'block';
+                        downloadsDiv.appendChild(downloadLink);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+</body>
+</html>
