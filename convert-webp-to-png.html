@@ -2,9 +2,12 @@
 <html>
 <head>
     <title>Convert WebP to PNG</title>
+    <!-- Include JSZip library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
 </head>
 <body>
     <input type="file" id="upload" accept="image/webp" multiple />
+    <button id="downloadAll" style="display:none;">Download All</button>
     <div id="downloads"></div>
 
     <script>
@@ -14,6 +17,10 @@
 
             const downloadsDiv = document.getElementById('downloads');
             downloadsDiv.innerHTML = ''; // Clear previous links
+
+            const zip = new JSZip();
+            let fileCount = files.length;
+            let processedCount = 0;
 
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
@@ -27,16 +34,33 @@
                         ctx.drawImage(img, 0, 0);
 
                         const pngDataUrl = canvas.toDataURL('image/png');
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = pngDataUrl;
-                        downloadLink.download = file.name.replace('.webp', '.png');
-                        downloadLink.textContent = `Download ${file.name.replace('.webp', '.png')}`;
-                        downloadLink.style.display = 'block';
-                        downloadsDiv.appendChild(downloadLink);
+                        const data = pngDataUrl.split(',')[1]; // Get the base64 part
+
+                        zip.file(file.name.replace('.webp', '.png'), data, {base64: true});
+                        processedCount++;
+
+                        if (processedCount === fileCount) {
+                            document.getElementById('downloadAll').style.display = 'block';
+                        }
                     };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
+            });
+        });
+
+        document.getElementById('downloadAll').addEventListener('click', function() {
+            const downloadsDiv = document.getElementById('downloads');
+            downloadsDiv.innerHTML = ''; // Clear previous links
+
+            zip.generateAsync({type: 'blob'}).then(function(content) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = URL.createObjectURL(content);
+                downloadLink.download = 'images.zip';
+                downloadLink.textContent = 'Download images.zip';
+                downloadLink.style.display = 'block';
+                downloadsDiv.appendChild(downloadLink);
+                downloadLink.click(); // Trigger the download automatically
             });
         });
     </script>
